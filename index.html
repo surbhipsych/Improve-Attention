@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Flappy Bird Revision Game</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: #70c5ce;
+      font-family: sans-serif;
+      overflow: hidden;
+    }
+    canvas {
+      display: block;
+      margin: 20px auto;
+      background: #fff;
+      border: 2px solid #333;
+    }
+    #graffiti {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 48px;
+      color: #ff4081;
+      font-weight: bold;
+      text-shadow: 2px 2px 4px #000;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div id="graffiti">LEVEL UP!</div>
+  <canvas id="gameCanvas" width="320" height="480"></canvas>
+  <script>
+    const canvas = document.getElementById("gameCanvas");
+    const ctx = canvas.getContext("2d");
+    const graffiti = document.getElementById("graffiti");
+
+    let frames = 0;
+
+    // Bird (🎈 balloon-style)
+    const bird = {
+      x: 50,
+      y: 150,
+      w: 24,
+      h: 24,
+      radius: 12,
+      gravity: 0.25,
+      jump: 4.6,
+      speed: 0,
+
+      draw() {
+        ctx.font = "20px serif";
+        ctx.fillText("🎈", this.x, this.y);
+      },
+
+      flap() {
+        this.speed = -this.jump;
+      },
+
+      update() {
+        this.speed += this.gravity;
+        this.y += this.speed;
+
+        if (this.y + this.h >= canvas.height) {
+          this.y = canvas.height - this.h;
+          this.speed = 0;
+        }
+
+        if (this.y < 0) {
+          this.y = 0;
+          this.speed = 0;
+        }
+      },
+    };
+
+    // Pipes and levels
+    const pipes = [];
+    const pipeWidth = 52;
+    let gap = 100;
+    let frameCount = 0;
+    let level = 1;
+    let pipesPassed = 0;
+
+    function drawPipeSegment(x, y, width, height, isTop) {
+      const segmentHeight = 10;
+      for (let i = 0; i < height; i += segmentHeight) {
+        ctx.fillStyle = i === 0 ? "#0f0" : "#228B22";
+        ctx.fillRect(x, isTop ? y + i : y + height - i - segmentHeight, width, segmentHeight - 1);
+      }
+    }
+
+    function drawPipes() {
+      pipes.forEach(pipe => {
+        drawPipeSegment(pipe.x, 0, pipeWidth, pipe.top, true);
+        drawPipeSegment(pipe.x, pipe.top + gap, pipeWidth, canvas.height - pipe.top - gap, false);
+      });
+    }
+
+    function updatePipes() {
+      frameCount++;
+      if (frameCount % 100 === 0) {
+        const top = Math.floor(Math.random() * 200) + 50;
+        pipes.push({ x: canvas.width, top });
+      }
+
+      pipes.forEach((pipe) => {
+        pipe.x -= 2;
+
+        if (
+          bird.x + bird.w > pipe.x &&
+          bird.x < pipe.x + pipeWidth &&
+          (bird.y < pipe.top || bird.y > pipe.top + gap)
+        ) {
+          bird.y = 150;
+          bird.speed = 0;
+          pipes.length = 0;
+          pipesPassed = 0;
+          level = 1;
+          gap = 100;
+          graffiti.style.display = "none";
+        }
+
+        if (pipe.x + pipeWidth < bird.x && !pipe.passed) {
+          pipe.passed = true;
+          pipesPassed++;
+
+          if (pipesPassed % 10 === 0) {
+            level++;
+            gap = Math.max(60, gap - 10);
+            graffiti.style.display = "block";
+            setTimeout(() => graffiti.style.display = "none", 1500);
+          }
+        }
+      });
+    }
+
+    function drawLevel() {
+      ctx.fillStyle = "#000";
+      ctx.font = "16px Arial";
+      ctx.fillText("Level: " + level, 10, 20);
+    }
+
+    function draw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      bird.draw();
+      drawPipes();
+      drawLevel();
+    }
+
+    function update() {
+      bird.update();
+      updatePipes();
+    }
+
+    function loop() {
+      update();
+      draw();
+      frames++;
+      requestAnimationFrame(loop);
+    }
+
+    document.addEventListener("keydown", function (e) {
+      if (e.code === "Space") bird.flap();
+    });
+
+    loop();
+  </script>
+</body>
+</html>  
