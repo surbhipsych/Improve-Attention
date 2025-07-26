@@ -1,2 +1,1 @@
-# Improve-Attention-
-Includes "skyhop" game that enhances sustained attention
+Welcome to **Sky Hop**, a fun and addictive side-scrolling game inspired by the classic Flappy Bird — but with a twist! This game is designed not just for entertainment, but also as a **tool to practice and improve sustained attention**. Stay focused, dodge the obstacles, and beat your high score!
