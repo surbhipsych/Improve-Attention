@@ -10,12 +10,17 @@
       background: #70c5ce;
       font-family: sans-serif;
       overflow: hidden;
+      text-align: center;
     }
     canvas {
       display: block;
       margin: 20px auto;
       background: #fff;
       border: 2px solid #333;
+      touch-action: manipulation;
+      width: 100%;
+      max-width: 600px;
+      aspect-ratio: 2 / 3;
     }
     #graffiti {
       position: absolute;
@@ -27,20 +32,42 @@
       font-weight: bold;
       text-shadow: 2px 2px 4px #000;
       display: none;
+      z-index: 2;
+    }
+    #flapBtn {
+      margin: 10px auto;
+      padding: 12px 30px;
+      font-size: 24px;
+      background: #ff4081;
+      color: white;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+    }
+    #scoreBoard {
+      font-size: 18px;
+      margin-top: 10px;
+      color: #fff;
     }
   </style>
 </head>
 <body>
+
   <div id="graffiti">LEVEL UP!</div>
   <canvas id="gameCanvas" width="320" height="480"></canvas>
+  <div id="scoreBoard">Score: 0 | High Score: 0</div>
+  <button id="flapBtn">Flap 🎈</button>
+
   <script>
     const canvas = document.getElementById("gameCanvas");
     const ctx = canvas.getContext("2d");
     const graffiti = document.getElementById("graffiti");
+    const flapBtn = document.getElementById("flapBtn");
+    const scoreBoard = document.getElementById("scoreBoard");
 
     let frames = 0;
+    let gameRunning = true;
 
-    // Bird (🎈 balloon-style)
     const bird = {
       x: 50,
       y: 150,
@@ -76,13 +103,14 @@
       },
     };
 
-    // Pipes and levels
     const pipes = [];
     const pipeWidth = 52;
     let gap = 100;
     let frameCount = 0;
     let level = 1;
     let pipesPassed = 0;
+    let score = 0;
+    let highScore = localStorage.getItem("flappyHighScore") || 0;
 
     function drawPipeSegment(x, y, width, height, isTop) {
       const segmentHeight = 10;
@@ -114,18 +142,14 @@
           bird.x < pipe.x + pipeWidth &&
           (bird.y < pipe.top || bird.y > pipe.top + gap)
         ) {
-          bird.y = 150;
-          bird.speed = 0;
-          pipes.length = 0;
-          pipesPassed = 0;
-          level = 1;
-          gap = 100;
-          graffiti.style.display = "none";
+          endGame();
         }
 
         if (pipe.x + pipeWidth < bird.x && !pipe.passed) {
           pipe.passed = true;
           pipesPassed++;
+          score++;
+          updateScoreBoard();
 
           if (pipesPassed % 10 === 0) {
             level++;
@@ -135,6 +159,14 @@
           }
         }
       });
+    }
+
+    function updateScoreBoard() {
+      if (score > highScore) {
+        highScore = score;
+        localStorage.setItem("flappyHighScore", highScore);
+      }
+      scoreBoard.textContent = `Score: ${score} | High Score: ${highScore}`;
     }
 
     function drawLevel() {
@@ -156,17 +188,54 @@
     }
 
     function loop() {
+      if (!gameRunning) return;
       update();
       draw();
       frames++;
       requestAnimationFrame(loop);
     }
 
+    function resetGame() {
+      pipes.length = 0;
+      frameCount = 0;
+      pipesPassed = 0;
+      level = 1;
+      gap = 100;
+      bird.y = 150;
+      bird.speed = 0;
+      score = 0;
+      updateScoreBoard();
+      graffiti.style.display = "none";
+    }
+
+    function startGame() {
+      resetGame();
+      gameRunning = true;
+      flapBtn.style.display = "inline-block";
+      loop();
+    }
+
+    function endGame() {
+      gameRunning = false;
+      flapBtn.style.display = "none";
+      setTimeout(startGame, 1500); // Auto restart after 1.5 seconds
+    }
+
+    // Controls
     document.addEventListener("keydown", function (e) {
-      if (e.code === "Space") bird.flap();
+      if (e.code === "Space" && gameRunning) bird.flap();
     });
 
-    loop();
+    canvas.addEventListener("touchstart", () => {
+      if (gameRunning) bird.flap();
+    }, { passive: true });
+
+    flapBtn.addEventListener("click", () => {
+      if (gameRunning) bird.flap();
+    });
+
+    updateScoreBoard();
+    startGame(); // Game starts immediately
   </script>
 </body>
-</html>  
+</html>
