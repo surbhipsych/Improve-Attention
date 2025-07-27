@@ -43,6 +43,7 @@
       border: none;
       border-radius: 10px;
       cursor: pointer;
+      display: block;
     }
     #scoreBoard {
       font-size: 18px;
@@ -75,7 +76,7 @@
       h: 24,
       radius: 12,
       gravity: 0.25,
-      jump: 4.6,
+      jump: 3.5, // Reduced jump intensity
       speed: 0,
 
       draw() {
@@ -135,7 +136,7 @@
       }
 
       pipes.forEach((pipe) => {
-        pipe.x -= 2;
+        pipe.x -= 1.5; // slower pipe speed (more fixed feel)
 
         if (
           bird.x + bird.w > pipe.x &&
@@ -177,8 +178,8 @@
 
     function draw() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-      bird.draw();
-      drawPipes();
+      drawPipes(); // Draw pipes first
+      bird.draw(); // Then bird (so it appears in front)
       drawLevel();
     }
 
@@ -211,31 +212,30 @@
     function startGame() {
       resetGame();
       gameRunning = true;
-      flapBtn.style.display = "inline-block";
       loop();
     }
 
     function endGame() {
       gameRunning = false;
-      flapBtn.style.display = "none";
-      setTimeout(startGame, 1500); // Auto restart after 1.5 seconds
+      setTimeout(startGame, 1500);
     }
 
-    // Controls
+    // ✅ Controls for mobile & desktop
     document.addEventListener("keydown", function (e) {
       if (e.code === "Space" && gameRunning) bird.flap();
+    });
+
+    flapBtn.addEventListener("click", () => {
+      if (gameRunning) bird.flap();
     });
 
     canvas.addEventListener("touchstart", () => {
       if (gameRunning) bird.flap();
     }, { passive: true });
 
-    flapBtn.addEventListener("click", () => {
-      if (gameRunning) bird.flap();
-    });
-
+    // Start
     updateScoreBoard();
-    startGame(); // Game starts immediately
+    startGame();
   </script>
 </body>
 </html>
